@@ -1,0 +1,89 @@
+SESSION BOX APP - PROMPT / SPECIFICATION
+==========================================
+
+App ka naam: Session Box
+Platform: Android Native (Kotlin)
+
+MAQSAD (GOAL)
+-------------
+Aik Android app banao jisme user multiple "sessions" bana sake (jaise
+Session 1, Session 2, Session 3 ...). Har session ke andar user apna
+mobile browser (WebView) use kare aur kisi bhi website pe login kare.
+Har session ka login/cookies/storage bilkul ALAG aur INDEPENDENT rahe -
+yani Session 1 mein Facebook account A se login ho aur Session 2 mein
+Facebook account B se login ho, dono ek dusre ko affect na karein.
+
+MAIN FEATURES
+-------------
+1. Session Box (Home Screen)
+   - Grid/list mein sab sessions dikhein (card design)
+   - Har card pe: session ka naam, last visited URL
+   - "+" floating button se naya session add karna
+   - Long press se session ka naam rename karna
+   - Delete button se session delete karna (cookies bhi clear ho jayein)
+
+2. Har Session ke andar (Browser Screen)
+   - URL bar (type URL ya search query)
+   - Go/Search button
+   - Back, Forward, Refresh buttons
+   - Loading progress bar
+   - WebView jisme JavaScript, DOM storage, cookies enabled hon
+   - Jo last URL visit hua wo automatically save ho (next baar wahi khule)
+
+3. Session Isolation (sabse zaroori part)
+   - Har session ka cookie jar, localStorage, cache ALAG ho
+   - Yeh isolation Android ke fixed process-pool tareeqe se ho:
+     * 8 fixed "slots" (BrowserActivity0 se BrowserActivity7)
+     * Har slot AndroidManifest.xml mein apna alag android:process
+       attribute rakhta ho (e.g. ":session0", ":session1" ...)
+     * Har process WebView.setDataDirectorySuffix() ke zariye apna
+       alag data directory use kare
+   - Naya session banate waqt jo bhi slot free ho wo assign ho jaye
+   - Maximum 8 sessions ek waqt mein (slots fixed hain, manifest mein
+     static declare hone zaroori hain - Android runtime par naye
+     process dynamically nahi bana sakta)
+
+DATA STORAGE
+------------
+- Sessions ki list (id, name, last URL, process slot number,
+  creation date) SharedPreferences mein JSON format mein save ho
+  (ya chahein to Room database use kar lein)
+
+TECHNICAL REQUIREMENTS
+-----------------------
+- Kotlin
+- minSdk 24, targetSdk 34
+- Libraries: androidx.appcompat, material, recyclerview,
+  constraintlayout, cardview, androidx.webkit
+- ViewBinding enabled
+- WebView settings: javaScriptEnabled = true, domStorageEnabled = true,
+  databaseEnabled = true
+- CookieManager: setAcceptCookie(true), setAcceptThirdPartyCookies(true)
+
+FILE/CLASS STRUCTURE
+---------------------
+- MainActivity.kt        -> Session Box home screen
+- SessionManager.kt       -> sessions ka data save/load/create/delete
+- Session.kt              -> data model (id, name, lastUrl, processSlot)
+- SessionAdapter.kt        -> RecyclerView adapter for session cards
+- BrowserActivityBase.kt   -> abstract WebView screen (shared logic)
+- BrowserActivities.kt     -> BrowserActivity0...BrowserActivity7
+                              (har aik alag android:process ke sath
+                              Manifest mein declared)
+- activity_main.xml, activity_browser.xml, item_session.xml -> layouts
+
+FUTURE ADD-ONS (OPTIONAL)
+--------------------------
+- Har session card pe website ka favicon dikhana
+- Session ko PIN ya fingerprint se lock karna
+- Incognito toggle (us session ki history save na ho)
+- "Clear cookies" button har session ke liye alag se
+- Slots ki tadaad 8 se zyada badhana (naye BrowserActivity classes +
+  Manifest entries + SessionManager.MAX_SLOTS update karna)
+
+NOTE
+----
+Yeh approach kisi maujooda app ka code copy nahi karta - yeh ek
+generic, well-known Android engineering pattern hai jo multi-account
+browser apps mein commonly use hota hai (separate OS process per
+session = separate WebView storage = independent login).
