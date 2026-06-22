@@ -1,20 +1,74 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 
 export function EmptyState() {
   const colors = useColors();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        damping: 18,
+        stiffness: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.05,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <View style={[styles.iconWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <Animated.View
+        style={[
+          styles.iconWrap,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            transform: [{ scale: pulseAnim }],
+          },
+        ]}
+      >
         <Feather name="layers" size={36} color={colors.primary} />
-      </View>
+      </Animated.View>
       <Text style={[styles.title, { color: colors.foreground }]}>No Sessions Yet</Text>
       <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-        Tap the + button to create your first isolated browser session.
+        Tap the <Text style={{ color: colors.primary }}>+</Text> button to create your first isolated browser session.
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 

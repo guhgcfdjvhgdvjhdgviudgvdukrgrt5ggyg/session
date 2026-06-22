@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -35,20 +34,18 @@ export function SessionCard({ session, onPress }: Props) {
 
   const handleDelete = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    Alert.alert("Delete Session", `Delete "${session.name}"? This will clear all cookies and data.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => deleteSession(session.id),
-      },
-    ]);
+    Alert.alert(
+      "Delete Session",
+      `Delete "${session.name}"? This will clear all cookies and data.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteSession(session.id) },
+      ],
+    );
   };
 
   const handleRename = () => {
-    if (newName.trim()) {
-      renameSession(session.id, newName.trim());
-    }
+    if (newName.trim()) renameSession(session.id, newName.trim());
     setRenaming(false);
   };
 
@@ -58,11 +55,15 @@ export function SessionCard({ session, onPress }: Props) {
 
   return (
     <>
-      <TouchableOpacity
+      <Pressable
         onPress={onPress}
         onLongPress={handleLongPress}
-        activeOpacity={0.75}
-        style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+        delayLongPress={500}
+        style={({ pressed }) => [
+          styles.card,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          pressed && { opacity: 0.75 },
+        ]}
       >
         <View style={[styles.colorBar, { backgroundColor: accent }]} />
         <View style={styles.content}>
@@ -70,9 +71,13 @@ export function SessionCard({ session, onPress }: Props) {
             <View style={[styles.iconBadge, { backgroundColor: accent + "20" }]}>
               <Feather name="globe" size={14} color={accent} />
             </View>
-            <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Pressable
+              onPress={handleDelete}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={({ pressed }) => pressed && { opacity: 0.5 }}
+            >
               <Feather name="trash-2" size={16} color={colors.mutedForeground} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
             {session.name}
@@ -81,14 +86,17 @@ export function SessionCard({ session, onPress }: Props) {
             {displayUrl}
           </Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       <Modal visible={renaming} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setRenaming(false)}>
           <Pressable style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.dialogTitle, { color: colors.foreground }]}>Rename Session</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              style={[
+                styles.input,
+                { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+              ]}
               value={newName}
               onChangeText={setNewName}
               autoFocus
@@ -98,18 +106,27 @@ export function SessionCard({ session, onPress }: Props) {
               placeholderTextColor={colors.mutedForeground}
             />
             <View style={styles.dialogButtons}>
-              <TouchableOpacity
-                style={[styles.dialogBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  pressed && { opacity: 0.7 },
+                ]}
                 onPress={() => setRenaming(false)}
               >
                 <Text style={{ color: colors.mutedForeground, fontSize: 15, fontWeight: "500" }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.dialogBtn, styles.dialogBtnPrimary, { backgroundColor: accent }]}
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  styles.dialogBtnPrimary,
+                  { backgroundColor: accent },
+                  pressed && { opacity: 0.8 },
+                ]}
                 onPress={handleRename}
               >
                 <Text style={{ color: "#0d1117", fontSize: 15, fontWeight: "700" }}>Save</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         </Pressable>

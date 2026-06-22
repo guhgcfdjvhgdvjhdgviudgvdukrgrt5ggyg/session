@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -85,20 +84,20 @@ export default function HomeScreen() {
         )}
       />
 
-      <TouchableOpacity
-        style={[
+      <Pressable
+        style={({ pressed }) => [
           styles.fab,
           {
             backgroundColor: canCreateMore ? colors.primary : colors.muted,
             bottom: bottomPad + 24,
             shadowColor: colors.primary,
+            opacity: pressed ? 0.85 : 1,
           },
         ]}
         onPress={handleFAB}
-        activeOpacity={0.85}
       >
         <Feather name="plus" size={26} color={canCreateMore ? "#0d1117" : colors.mutedForeground} />
-      </TouchableOpacity>
+      </Pressable>
 
       {!canCreateMore && (
         <View style={[styles.limitBanner, { backgroundColor: colors.surface, borderColor: colors.border, bottom: bottomPad + 90 }]}>
@@ -127,18 +126,27 @@ export default function HomeScreen() {
               onSubmitEditing={handleCreate}
             />
             <View style={styles.dialogButtons}>
-              <TouchableOpacity
-                style={[styles.dialogBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  pressed && { opacity: 0.7 },
+                ]}
                 onPress={() => setCreating(false)}
               >
                 <Text style={{ color: colors.mutedForeground, fontSize: 15, fontWeight: "500" }}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.dialogBtn, styles.dialogBtnPrimary, { backgroundColor: colors.primary }]}
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  styles.dialogBtnPrimary,
+                  { backgroundColor: colors.primary },
+                  pressed && { opacity: 0.8 },
+                ]}
                 onPress={handleCreate}
               >
                 <Text style={{ color: "#0d1117", fontSize: 15, fontWeight: "700" }}>Create</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </Pressable>
         </Pressable>

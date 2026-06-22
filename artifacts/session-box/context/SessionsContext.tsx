@@ -1,12 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session, MAX_SESSIONS, SESSION_COLORS } from "@/types/session";
+import { clearCookies } from "@/services/cookies";
+import { clearSessionExtensions } from "@/services/extensions";
 
 const STORAGE_KEY = "@session_box_sessions";
 
 interface SessionsContextValue {
   sessions: Session[];
-  createSession: (name: string) => Session | null;
+  createSession: (name: string, userAgent?: string) => Session | null;
   deleteSession: (id: string) => void;
   renameSession: (id: string, name: string) => void;
   updateLastUrl: (id: string, url: string) => void;
@@ -40,7 +42,7 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createSession = useCallback(
-    (name: string): Session | null => {
+    (name: string, userAgent?: string): Session | null => {
       if (sessions.length >= MAX_SESSIONS) return null;
       const usedColors = sessions.map((s) => s.colorIndex);
       let colorIndex = 0;
@@ -56,6 +58,7 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
         lastUrl: "",
         createdAt: Date.now(),
         colorIndex,
+        ...(userAgent ? { userAgent } : {}),
       };
       const updated = [...sessions, session];
       setSessions(updated);
@@ -70,6 +73,8 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
       const updated = sessions.filter((s) => s.id !== id);
       setSessions(updated);
       persist(updated);
+      clearCookies(id);
+      clearSessionExtensions(id);
     },
     [sessions, persist],
   );

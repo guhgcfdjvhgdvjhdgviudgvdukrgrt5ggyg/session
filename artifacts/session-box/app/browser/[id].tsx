@@ -3,10 +3,10 @@ import {
   ActivityIndicator,
   Keyboard,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useLocalSearchParams, useNavigation } from "expo-router";
@@ -85,23 +85,18 @@ export default function BrowserScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View
-        style={[
-          styles.topBar,
-          { paddingTop: topPad + 8, borderBottomColor: colors.border, backgroundColor: colors.card },
-        ]}
-      >
+      <View style={[styles.topBar, { paddingTop: topPad + 8, borderBottomColor: colors.border, backgroundColor: colors.card }]}>
         <View style={styles.topRow}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               navigation.goBack();
             }}
-            style={styles.backBtn}
+            style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.5 }]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Feather name="chevron-left" size={22} color={colors.foreground} />
-          </TouchableOpacity>
+          </Pressable>
 
           <View style={[styles.urlBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <View style={[styles.sessionDot, { backgroundColor: accent }]} />
@@ -125,21 +120,28 @@ export default function BrowserScreen() {
                 placeholder="Search or enter URL"
               />
             ) : (
-              <TouchableOpacity style={styles.urlDisplay} onPress={() => {
-                setUrlText(currentUrl);
-                setEditingUrl(true);
-              }}>
+              <Pressable
+                style={styles.urlDisplay}
+                onPress={() => {
+                  setUrlText(currentUrl);
+                  setEditingUrl(true);
+                }}
+              >
                 <Text style={[styles.urlDisplayText, { color: colors.foreground }]} numberOfLines={1}>
                   {displayUrl || "New Tab"}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {loading ? (
               <ActivityIndicator size="small" color={accent} style={{ marginRight: 4 }} />
             ) : (
-              <TouchableOpacity onPress={() => webViewRef.current?.reload()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Pressable
+                onPress={() => webViewRef.current?.reload()}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={({ pressed }) => pressed && { opacity: 0.5 }}
+              >
                 <Feather name="refresh-cw" size={15} color={colors.mutedForeground} />
-              </TouchableOpacity>
+              </Pressable>
             )}
           </View>
         </View>
@@ -166,50 +168,44 @@ export default function BrowserScreen() {
         incognito={false}
         sharedCookiesEnabled={false}
         cacheEnabled
-        androidLayerType="hardware"
       />
 
-      <View
-        style={[
-          styles.bottomBar,
-          { paddingBottom: bottomPad + 8, borderTopColor: colors.border, backgroundColor: colors.card },
-        ]}
-      >
-        <TouchableOpacity
+      <View style={[styles.bottomBar, { paddingBottom: bottomPad + 8, borderTopColor: colors.border, backgroundColor: colors.card }]}>
+        <Pressable
           onPress={() => {
             if (canGoBack) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               webViewRef.current?.goBack();
             }
           }}
-          style={[styles.navBtn, !canGoBack && styles.navBtnDisabled]}
+          style={({ pressed }) => [styles.navBtn, !canGoBack && styles.navBtnDisabled, pressed && { opacity: 0.5 }]}
           disabled={!canGoBack}
         >
           <Feather name="arrow-left" size={20} color={canGoBack ? colors.foreground : colors.mutedForeground} />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             if (canGoForward) {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               webViewRef.current?.goForward();
             }
           }}
-          style={[styles.navBtn, !canGoForward && styles.navBtnDisabled]}
+          style={({ pressed }) => [styles.navBtn, !canGoForward && styles.navBtnDisabled, pressed && { opacity: 0.5 }]}
           disabled={!canGoForward}
         >
           <Feather name="arrow-right" size={20} color={canGoForward ? colors.foreground : colors.mutedForeground} />
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             webViewRef.current?.reload();
           }}
-          style={styles.navBtn}
+          style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.5 }]}
         >
           <Feather name="refresh-cw" size={20} color={colors.foreground} />
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={[styles.sessionPill, { backgroundColor: accent + "20", borderColor: accent + "50" }]}>
           <View style={[styles.sessionDotLg, { backgroundColor: accent }]} />
@@ -218,15 +214,15 @@ export default function BrowserScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity
+        <Pressable
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             webViewRef.current?.injectJavaScript(`window.location.href = '${DEFAULT_URL}'; true;`);
           }}
-          style={styles.navBtn}
+          style={({ pressed }) => [styles.navBtn, pressed && { opacity: 0.5 }]}
         >
           <Feather name="home" size={20} color={colors.foreground} />
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </View>
   );
@@ -246,7 +242,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  backBtn: {
+  iconBtn: {
     width: 34,
     height: 34,
     alignItems: "center",
