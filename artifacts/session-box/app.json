@@ -14,9 +14,11 @@
       "backgroundColor": "#0d1117"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.sessionbox.app"
     },
     "android": {
+      "package": "com.sessionbox.app",
       "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
@@ -30,11 +32,23 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-network"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "{{EAS_PROJECT_ID}}"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/{{EAS_PROJECT_ID}}"
     }
   }
 }
