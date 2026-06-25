@@ -14,8 +14,11 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NetworkBanner } from "@/components/NetworkBanner";
 import { Onboarding } from "@/components/Onboarding";
 import { ExtensionsProvider } from "@/context/ExtensionsContext";
+import { NetworkProvider } from "@/context/NetworkContext";
+import { PlanProvider } from "@/context/PlanContext";
 import { SessionsProvider } from "@/context/SessionsContext";
 import { ToastProvider } from "@/context/ToastContext";
 
@@ -52,18 +55,23 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
+              <NetworkProvider>
+            <PlanProvider>
             <SessionsProvider>
               <ExtensionsProvider>
               <ToastProvider>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
                   <RootLayoutNav />
+                  <NetworkBanner />
                   <Onboarding />
                 </KeyboardProvider>
               </GestureHandlerRootView>
             </ToastProvider>
               </ExtensionsProvider>
           </SessionsProvider>
+            </PlanProvider>
+              </NetworkProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

@@ -8,9 +8,10 @@ const STORAGE_KEY = "@session_box_sessions";
 
 interface SessionsContextValue {
   sessions: Session[];
-  createSession: (name: string, userAgent?: string) => Session | null;
+  createSession: (name: string, userAgent?: string, labels?: string[]) => Session | null;
   deleteSession: (id: string) => void;
   renameSession: (id: string, name: string) => void;
+  setSessionLabels: (id: string, labels: string[]) => void;
   updateLastUrl: (id: string, url: string) => void;
   getSession: (id: string) => Session | undefined;
   canCreateMore: boolean;
@@ -42,7 +43,7 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createSession = useCallback(
-    (name: string, userAgent?: string): Session | null => {
+    (name: string, userAgent?: string, labels?: string[]): Session | null => {
       if (sessions.length >= MAX_SESSIONS) return null;
       const usedColors = sessions.map((s) => s.colorIndex);
       let colorIndex = 0;
@@ -58,6 +59,7 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
         lastUrl: "",
         createdAt: Date.now(),
         colorIndex,
+        labels: labels ?? [],
         ...(userAgent ? { userAgent } : {}),
       };
       const updated = [...sessions, session];
@@ -90,6 +92,17 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
     [sessions, persist],
   );
 
+  const setSessionLabels = useCallback(
+    (id: string, labels: string[]) => {
+      setSessions((prev) => {
+        const updated = prev.map((s) => (s.id === id ? { ...s, labels } : s));
+        persist(updated);
+        return updated;
+      });
+    },
+    [persist],
+  );
+
   const updateLastUrl = useCallback(
     (id: string, url: string) => {
       setSessions((prev) => {
@@ -113,6 +126,7 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
         createSession,
         deleteSession,
         renameSession,
+        setSessionLabels,
         updateLastUrl,
         getSession,
         canCreateMore: sessions.length < MAX_SESSIONS,

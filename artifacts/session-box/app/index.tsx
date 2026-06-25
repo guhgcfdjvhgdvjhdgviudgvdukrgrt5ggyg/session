@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -14,26 +15,34 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/useColors";
+import { usePlan } from "@/context/PlanContext";
 import { useSessions } from "@/context/SessionsContext";
+import { useToast } from "@/context/ToastContext";
+import { PlanManager } from "@/components/PlanManager";
 import { SessionCard } from "@/components/SessionCard";
 import { EmptyState } from "@/components/EmptyState";
-import { MAX_SESSIONS } from "@/types/session";
 
 export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { sessions, createSession, canCreateMore } = useSessions();
+  const { plan } = usePlan();
+  const { showToast } = useToast();
+  const [settingsVisible, setSettingsVisible] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newLabels, setNewLabels] = useState("");
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const handleCreate = () => {
-    const session = createSession(newName);
+    const labels = newLabels.split(",").map((l) => l.trim()).filter(Boolean);
+    const session = createSession(newName, undefined, labels);
     setCreating(false);
     setNewName("");
+    setNewLabels("");
     if (session) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.push(`/browser/${session.id}`);
@@ -41,8 +50,9 @@ export default function HomeScreen() {
   };
 
   const handleFAB = () => {
-    if (!canCreateMore) {
+    if (sessions.length >= plan.maxSessions || !canCreateMore) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      showToast(`Maximum ${plan.maxSessions} sessions (${plan.name} plan)`, "warning", "alert-circle");
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -57,11 +67,25 @@ export default function HomeScreen() {
           <View style={[styles.logoBox, { backgroundColor: colors.primary + "20", borderColor: colors.primary + "40" }]}>
             <Feather name="layers" size={18} color={colors.primary} />
           </View>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Session Box</Text>
-        </View>
-        <Text style={[styles.headerCount, { color: colors.mutedForeground }]}>
-          {sessions.length}/{MAX_SESSIONS}
-        </Text>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Session Box</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+            <TouchableOpacity
+              onPress={() => router.push("/search")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="search" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSettingsVisible(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="settings" size={16} color={colors.mutedForeground} />
+            </TouchableOpacity>
+            <Text style={[styles.headerCount, { color: colors.mutedForeground }]}>
+              {sessions.length}/{plan.maxSessions}
+            </Text>
+          </View>
       </View>
 
       <FlatList
@@ -88,7 +112,7 @@ export default function HomeScreen() {
         style={({ pressed }) => [
           styles.fab,
           {
-            backgroundColor: canCreateMore ? colors.primary : colors.muted,
+            backgroundColor: sessions.length < plan.maxSessions && canCreateMore ? colors.primary : colors.muted,
             bottom: bottomPad + 24,
             shadowColor: colors.primary,
             opacity: pressed ? 0.85 : 1,
@@ -103,7 +127,7 @@ export default function HomeScreen() {
         <View style={[styles.limitBanner, { backgroundColor: colors.surface, borderColor: colors.border, bottom: bottomPad + 90 }]}>
           <Feather name="alert-circle" size={13} color={colors.mutedForeground} />
           <Text style={[styles.limitText, { color: colors.mutedForeground }]}>
-            Maximum 8 sessions reached
+            Maximum {plan.maxSessions} sessions ({plan.name} plan)
           </Text>
         </View>
       )}
@@ -122,8 +146,17 @@ export default function HomeScreen() {
               value={newName}
               onChangeText={setNewName}
               autoFocus
+              returnKeyType="next"
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              placeholder="Labels (comma-separated: work, personal)"
+              placeholderTextColor={colors.mutedForeground}
+              value={newLabels}
+              onChangeText={setNewLabels}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
+              autoCapitalize="none"
             />
             <View style={styles.dialogButtons}>
               <Pressable
@@ -151,6 +184,8 @@ export default function HomeScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <PlanManager visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </View>
   );
 }

@@ -21,18 +21,22 @@ interface Props {
 
 export function SessionCard({ session, onPress }: Props) {
   const colors = useColors();
-  const { deleteSession, renameSession } = useSessions();
+  const { deleteSession, renameSession, setSessionLabels } = useSessions();
+  const [menuVisible, setMenuVisible] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(session.name);
+  const [labeling, setLabeling] = useState(false);
+  const [labelInput, setLabelInput] = useState((session.labels ?? []).join(", "));
   const accent = SESSION_COLORS[session.colorIndex] ?? colors.primary;
 
   const handleLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setNewName(session.name);
-    setRenaming(true);
+    setMenuVisible(true);
   };
 
   const handleDelete = () => {
+    setMenuVisible(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
       "Delete Session",
@@ -47,6 +51,15 @@ export function SessionCard({ session, onPress }: Props) {
   const handleRename = () => {
     if (newName.trim()) renameSession(session.id, newName.trim());
     setRenaming(false);
+  };
+
+  const handleSaveLabels = () => {
+    const labels = labelInput
+      .split(",")
+      .map((l) => l.trim())
+      .filter(Boolean);
+    setSessionLabels(session.id, labels);
+    setLabeling(false);
   };
 
   const displayUrl = session.lastUrl
@@ -82,21 +95,70 @@ export function SessionCard({ session, onPress }: Props) {
           <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
             {session.name}
           </Text>
+          {(session.labels ?? []).length > 0 && (
+            <View style={styles.labelRow}>
+              {(session.labels ?? []).slice(0, 3).map((l, i) => (
+                <View key={i} style={[styles.chip, { backgroundColor: accent + "20" }]}>
+                  <Text style={[styles.chipText, { color: accent }]} numberOfLines={1}>
+                    {l}
+                  </Text>
+                </View>
+              ))}
+              {(session.labels ?? []).length > 3 && (
+                <Text style={[styles.chipMore, { color: colors.mutedForeground }]}>
+                  +{(session.labels ?? []).length - 3}
+                </Text>
+              )}
+            </View>
+          )}
           <Text style={[styles.url, { color: colors.mutedForeground }]} numberOfLines={1}>
             {displayUrl}
           </Text>
         </View>
       </Pressable>
 
+      {/* Context Menu */}
+      <Modal visible={menuVisible} transparent animationType="fade">
+        <Pressable style={styles.overlay} onPress={() => setMenuVisible(false)}>
+          <View style={[styles.menu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.menuTitle, { color: colors.foreground }]}>{session.name}</Text>
+
+            <Pressable
+              style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.6 }]}
+              onPress={() => { setMenuVisible(false); setRenaming(true); }}
+            >
+              <Feather name="edit-2" size={16} color={colors.foreground} />
+              <Text style={[styles.menuItemText, { color: colors.foreground }]}>Rename</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.6 }]}
+              onPress={() => { setMenuVisible(false); setLabelInput((session.labels ?? []).join(", ")); setLabeling(true); }}
+            >
+              <Feather name="tag" size={16} color={colors.foreground} />
+              <Text style={[styles.menuItemText, { color: colors.foreground }]}>Edit Labels</Text>
+            </Pressable>
+
+            <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+            <Pressable
+              style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.6 }]}
+              onPress={handleDelete}
+            >
+              <Feather name="trash-2" size={16} color="#ef4444" />
+              <Text style={[styles.menuItemText, { color: "#ef4444" }]}>Delete</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Rename Dialog */}
       <Modal visible={renaming} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setRenaming(false)}>
           <Pressable style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.dialogTitle, { color: colors.foreground }]}>Rename Session</Text>
             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
-              ]}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
               value={newName}
               onChangeText={setNewName}
               autoFocus
@@ -124,6 +186,50 @@ export function SessionCard({ session, onPress }: Props) {
                   pressed && { opacity: 0.8 },
                 ]}
                 onPress={handleRename}
+              >
+                <Text style={{ color: "#0d1117", fontSize: 15, fontWeight: "700" }}>Save</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Labels Dialog */}
+      <Modal visible={labeling} transparent animationType="fade">
+        <Pressable style={styles.overlay} onPress={() => setLabeling(false)}>
+          <Pressable style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.dialogTitle, { color: colors.foreground }]}>Edit Labels</Text>
+            <Text style={[styles.dialogHint, { color: colors.mutedForeground }]}>
+              Separate labels with commas (e.g. work, personal, shopping)
+            </Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+              value={labelInput}
+              onChangeText={setLabelInput}
+              autoFocus
+              selectTextOnFocus
+              placeholder="work, personal, shopping"
+              placeholderTextColor={colors.mutedForeground}
+            />
+            <View style={styles.dialogButtons}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  pressed && { opacity: 0.7 },
+                ]}
+                onPress={() => setLabeling(false)}
+              >
+                <Text style={{ color: colors.mutedForeground, fontSize: 15, fontWeight: "500" }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.dialogBtn,
+                  styles.dialogBtnPrimary,
+                  { backgroundColor: accent },
+                  pressed && { opacity: 0.8 },
+                ]}
+                onPress={handleSaveLabels}
               >
                 <Text style={{ color: "#0d1117", fontSize: 15, fontWeight: "700" }}>Save</Text>
               </Pressable>
@@ -169,6 +275,26 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
+  labelRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginBottom: 4,
+  },
+  chip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  chipText: {
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  chipMore: {
+    fontSize: 10,
+    fontWeight: "500",
+    alignSelf: "center",
+  },
   url: {
     fontSize: 11,
     lineHeight: 15,
@@ -178,6 +304,36 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  menu: {
+    width: 260,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 8,
+    gap: 4,
+  },
+  menuTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  menuItemText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  menuDivider: {
+    height: 1,
+    marginVertical: 4,
+    marginHorizontal: 12,
   },
   dialog: {
     width: 300,
@@ -189,6 +345,11 @@ const styles = StyleSheet.create({
   dialogTitle: {
     fontSize: 17,
     fontWeight: "700",
+    textAlign: "center",
+  },
+  dialogHint: {
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
   },
   input: {

@@ -5,6 +5,7 @@ export interface Session {
   createdAt: number;
   colorIndex: number;
   userAgent?: string;
+  labels: string[];
 }
 
 export const DESKTOP_USER_AGENT =
@@ -21,4 +22,4 @@ export const SESSION_COLORS = [
   "#ef4444",
 ];
 
-export const MAX_SESSIONS = 8;
+export const MAX_SESSIONS = 99;
