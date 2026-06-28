@@ -41,7 +41,7 @@ jobs:
         working-directory: artifacts/session-box
         run: |
           mkdir -p android/app/src/main/assets
-          npx react-native bundle \
+          npx metro bundle \
             --platform android \
             --dev false \
             --entry-file node_modules/expo-router/entry.js \
