@@ -24,7 +24,7 @@ jobs:
 
       - name: Generate native Android project
         working-directory: artifacts/session-box
-        run: npx expo prebuild --platform android --clean
+        run: npx expo prebuild --platform android --clean --no-install
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
